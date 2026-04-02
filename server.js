@@ -29,3 +29,34 @@ app.get("/products", async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log("Server running on port " + PORT));
+app.get("/add-products", async (req, res) => {
+  try {
+    const products = [
+      {
+        name: "Wireless Earbuds",
+        price: 1299,
+        link: "https://www.amazon.in/dp/B0TEST1?tag=mayhemstore-21"
+      },
+      {
+        name: "Smart Watch",
+        price: 1999,
+        link: "https://www.amazon.in/dp/B0TEST2?tag=mayhemstore-21"
+      },
+      {
+        name: "Bluetooth Speaker",
+        price: 1499,
+        link: "https://www.amazon.in/dp/B0TEST3?tag=mayhemstore-21"
+      },
+      {
+        name: "Power Bank",
+        price: 999,
+        link: "https://www.amazon.in/dp/B0TEST4?tag=mayhemstore-21"
+      }
+    ];
+
+    await Product.insertMany(products);
+    res.send("Products Added 🚀");
+  } catch (err) {
+    res.send("Error adding products");
+  }
+});
