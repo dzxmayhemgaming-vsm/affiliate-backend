@@ -1,148 +1,83 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// MongoDB Connection
-mongoose.connect("mongodb+srv://DZXMAYHEMGAMING1997:Vikram%401997@cluster0.bsbxqjp.mongodb.net/affiliateDB")
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
-
-// Product Schema
-const ProductSchema = new mongoose.Schema({
-  name: String,
-  price: Number,
-  link: String,
-  image: String,
-  category: String
-});
-
-const Product = mongoose.model("Product", ProductSchema);
-
-// Home Route
-app.get("/", (req, res) => {
-  res.send("Backend Running 🚀");
-});
-
-// Get All Products
-app.get("/products", async (req, res) => {
-  try {
-    const data = await Product.find();
-    res.json(data);
+    res.status(201).json(product);
   } catch (err) {
-    res.status(500).send("Error loading products");
+    res.status(500).json({ message: "Failed to add product" });
   }
 });
 
-// Delete All Products
-app.get("/delete-all", async (req, res) => {
-  try {
-    await Product.deleteMany({});
-    res.send("All Products Deleted ❌");
-  } catch (err) {
-    res.status(500).send("Error deleting products");
-  }
-});
-
-// Add Demo Products
-app.get("/add-products", async (req, res) => {
-  try {
-    const products = [
-      {
-        name: "Wireless Earbuds",
-        price: 1299,
-        link: "https://www.amazon.in/dp/B0TEST1?tag=mayhemstore-21",
-        image: "https://m.media-amazon.com/images/I/61CGHv6kmWL._SX522_.jpg",
-        category: "Audio"
-      },
-      {
-        name: "Smart Watch",
-        price: 1999,
-        link: "https://www.amazon.in/dp/B0TEST2?tag=mayhemstore-21",
-        image: "https://m.media-amazon.com/images/I/61y2VVWcGBL._SX522_.jpg",
-        category: "Wearables"
-      },
-      {
-        name: "Bluetooth Speaker",
-        price: 1499,
-        link: "https://www.amazon.in/dp/B0TEST3?tag=mayhemstore-21",
-        image: "https://m.media-amazon.com/images/I/71lG7gC6PBL._SX522_.jpg",
-        category: "Audio"
-      },
-      {
-        name: "Power Bank",
-        price: 999,
-        link: "https://www.amazon.in/dp/B0TEST4?tag=mayhemstore-21",
-        image: "https://m.media-amazon.com/images/I/61X5Jd0G7qL._SX522_.jpg",
-        category: "Accessories"
-      }
-    ];
-
-    for (const p of products) {
-      await Product.create(p);
-    }
-
-    res.send("Products Added 🚀");
-  } catch (err) {
-    res.status(500).send("Error adding products");
-  }
-});
-
-// Add 1000 Bulk Products with Images
-app.get("/bulk-products", async (req, res) => {
+app.get("/seed-mayhemstore", async (_req, res) => {
   try {
     const baseProducts = [
       {
-        name: "Wireless Earbuds",
+        sku: "AUD-001",
+        name: "Mayhem Wireless Earbuds",
         price: 1299,
-        image: "https://m.media-amazon.com/images/I/61CGHv6kmWL._SX522_.jpg",
-        category: "Audio"
+        image: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=600&q=80",
+        category: "Audio",
+        brand: "Mayhemstore",
+        searchKeyword: "wireless earbuds",
+        link: "https://www.amazon.in/s?k=wireless+earbuds"
       },
       {
-        name: "Smart Watch",
+        sku: "WAR-001",
+        name: "Mayhem Smart Watch",
         price: 1999,
-        image: "https://m.media-amazon.com/images/I/61y2VVWcGBL._SX522_.jpg",
-        category: "Wearables"
+        image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80",
+        category: "Wearables",
+        brand: "Mayhemstore",
+        searchKeyword: "smart watch",
+        link: "https://www.amazon.in/s?k=smart+watch"
       },
       {
-        name: "Bluetooth Speaker",
-        price: 1499,
-        image: "https://m.media-amazon.com/images/I/71lG7gC6PBL._SX522_.jpg",
-        category: "Audio"
-      },
-      {
-        name: "Power Bank",
+        sku: "ACC-001",
+        name: "Mayhem Power Bank",
         price: 999,
-        image: "https://m.media-amazon.com/images/I/61X5Jd0G7qL._SX522_.jpg",
-        category: "Accessories"
+        image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=600&q=80",
+        category: "Accessories",
+        brand: "Mayhemstore",
+        searchKeyword: "power bank",
+        link: "https://www.amazon.in/s?k=power+bank"
+      },
+      {
+        sku: "PHN-001",
+        name: "Mayhem Smartphone X1",
+        price: 14999,
+        image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80",
+        category: "Smartphones",
+        brand: "Mayhemstore",
+        searchKeyword: "smartphone",
+        link: "https://www.amazon.in/s?k=smartphone"
+      },
+      {
+        sku: "ELC-001",
+        name: "Mayhem Bluetooth Speaker",
+        price: 1499,
+        image: "https://images.unsplash.com/photo-1589003077984-894e133dabab?auto=format&fit=crop&w=600&q=80",
+        category: "Electronics",
+        brand: "Mayhemstore",
+        searchKeyword: "bluetooth speaker",
+        link: "https://www.amazon.in/s?k=bluetooth+speaker"
       }
     ];
 
-    let products = [];
+    let added = 0;
 
-    for (let i = 1; i <= 250; i++) {
-      baseProducts.forEach((item) => {
-        products.push({
-          name: `${item.name} ${i}`,
-          price: item.price,
-          image: item.image,
-          category: item.category,
-          link: `https://www.amazon.in/s?k=${encodeURIComponent(item.name)}&tag=mayhemstore-21`
+    for (const item of baseProducts) {
+      const exists = await Product.findOne({ sku: item.sku });
+      if (!exists) {
+        await Product.create({
+          ...item,
+          affiliateLink: makeAffiliateLink(item.link)
         });
-      });
+        added++;
+      }
     }
 
-    await Product.insertMany(products);
-
-    res.send("1000 Products Added with Images 🚀");
+    res.json({ message: "Mayhemstore seed complete", added });
   } catch (err) {
-    res.status(500).send("Error adding bulk products");
+    res.status(500).json({ message: "Seed failed" });
   }
 });
 
-// Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server running on port " + PORT));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
