@@ -150,73 +150,80 @@ app.get("/add-products", async (_req, res) => {
 
 app.get("/bulk-products", async (_req, res) => {
   try {
-    const baseProducts = [
+    const products = [];
+
+    const categories = [
       {
-        prefix: "AUD",
         name: "Wireless Earbuds",
+        category: "Audio",
         price: 1299,
-        image: "https://m.media-amazon.com/images/I/61CGHv6kmWL._SX522_.jpg",
-        category: "Audio"
+        images: [
+          "https://m.media-amazon.com/images/I/61CGHv6kmWL._SX522_.jpg",
+          "https://m.media-amazon.com/images/I/61imYpK33qL._SX522_.jpg"
+        ]
       },
       {
-        prefix: "WAR",
         name: "Smart Watch",
+        category: "Wearables",
         price: 1999,
-        image: "https://m.media-amazon.com/images/I/61y2VVWcGBL._SX522_.jpg",
-        category: "Wearables"
+        images: [
+          "https://m.media-amazon.com/images/I/61y2VVWcGBL._SX522_.jpg",
+          "https://m.media-amazon.com/images/I/71Swqqe7XAL._SX522_.jpg"
+        ]
       },
       {
-        prefix: "ACC",
         name: "Power Bank",
+        category: "Accessories",
         price: 999,
-        image: "https://m.media-amazon.com/images/I/61X5Jd0G7qL._SX522_.jpg",
-        category: "Accessories"
+        images: [
+          "https://m.media-amazon.com/images/I/61X5Jd0G7qL._SX522_.jpg"
+        ]
       },
       {
-        prefix: "PHN",
-        name: "Smartphone",
-        price: 14999,
-        image: "https://m.media-amazon.com/images/I/71d7rfSl0wL._SX679_.jpg",
-        category: "Smartphones"
-      },
-      {
-        prefix: "ELC",
         name: "Bluetooth Speaker",
+        category: "Electronics",
         price: 1499,
-        image: "https://m.media-amazon.com/images/I/71lG7gC6PBL._SX522_.jpg",
-        category: "Electronics"
+        images: [
+          "https://m.media-amazon.com/images/I/71lG7gC6PBL._SX522_.jpg"
+        ]
+      },
+      {
+        name: "Smartphone",
+        category: "Smartphones",
+        price: 14999,
+        images: [
+          "https://m.media-amazon.com/images/I/71d7rfSl0wL._SX679_.jpg"
+        ]
       }
     ];
 
-    let added = 0;
+    let count = 1;
 
-    for (let i = 1; i <= 200; i++) {
-      for (const item of baseProducts) {
-        const sku = `${item.prefix}-${String(i).padStart(3, "0")}`;
+    for (let i = 0; i < 200; i++) {
+      for (const item of categories) {
+        const sku = `SKU-${count}`;
         const exists = await Product.findOne({ sku });
 
         if (!exists) {
-          const amazonSearchLink = makeAffiliateLink(
-            `https://www.amazon.in/s?k=${encodeURIComponent(item.name)}`
-          );
-
-          await Product.create({
+          products.push({
             sku,
-            name: `${item.name} ${i}`,
-            price: item.price,
-            link: amazonSearchLink,
-            image: item.image,
+            name: `${item.name} ${Math.floor(Math.random() * 999)}`,
+            price: item.price + Math.floor(Math.random() * 500),
+            link: makeAffiliateLink(`https://www.amazon.in/s?k=${encodeURIComponent(item.name)}`),
+            image: item.images[Math.floor(Math.random() * item.images.length)],
             category: item.category
           });
-
-          added++;
         }
+
+        count++;
       }
     }
 
-    res.json({ message: "1000 Products Added 🚀", added });
+    await Product.insertMany(products);
+
+    res.json({ message: "Smart Products Added 🚀", total: products.length });
   } catch (err) {
-    res.status(500).json({ message: "Error adding bulk products" });
+    res.status(500).json({ message: "Error adding products" });
   }
 });
 
