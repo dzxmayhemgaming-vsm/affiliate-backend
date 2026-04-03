@@ -1,234 +1,146 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-const PORT = process.env.PORT || 5000;
-
-mongoose
-  .connect(
-    "mongodb+srv://DZXMAYHEMGAMING1997:Vikram%401997@cluster0.bsbxqjp.mongodb.net/affiliateDB"
-  )
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log("MongoDB Error:", err.message));
-
-const ProductSchema = new mongoose.Schema(
-  {
-    sku: { type: String, unique: true, sparse: true, trim: true },
-    name: { type: String, required: true, trim: true },
-    price: { type: Number, required: true, min: 0 },
-    link: { type: String, required: true, trim: true },
-    image: { type: String, default: "" },
-    category: {
-      type: String,
-      enum: ["Audio", "Wearables", "Accessories", "Smartphones", "Electronics"],
-      default: "Electronics"
-    }
-  },
-  { timestamps: true }
-);
-
-const Product = mongoose.model("Product", ProductSchema);
-
-function makeAffiliateLink(url) {
-  if (!url) return "#";
-  if (url.includes("tag=mayhemstore-21")) return url;
-  return `${url}${url.includes("?") ? "&" : "?"}tag=mayhemstore-21`;
-}
-
-function normalizeCategory(category) {
-  const allowed = ["Audio", "Wearables", "Accessories", "Smartphones", "Electronics"];
-  const found = allowed.find(
-    (c) => c.toLowerCase() === String(category || "").trim().toLowerCase()
-  );
-  return found || "Electronics";
-}
-
-app.get("/", (_req, res) => {
-  res.send("Backend Running 🚀");
-});
-
-app.get("/products/categories", (_req, res) => {
-  res.json(["Audio", "Wearables", "Accessories", "Smartphones", "Electronics"]);
-});
-
-app.get("/products", async (req, res) => {
-  try {
-    const category = String(req.query.category || "").trim();
-    const q = String(req.query.q || "").trim();
-    const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
-
-    const filter = {};
-
-    if (category) {
-      filter.category = normalizeCategory(category);
-    }
-
-    if (q) {
-      filter.name = { $regex: q, $options: "i" };
-    }
-
-    const products = await Product.find(filter).sort({ createdAt: -1 }).limit(limit);
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: "Error loading products" });
-  }
-});
-
-app.get("/delete-all", async (_req, res) => {
-  try {
-    await Product.deleteMany({});
-    res.send("All Products Deleted ❌");
-  } catch (err) {
-    res.status(500).send("Error deleting products");
-  }
-});
-
-app.get("/add-products", async (_req, res) => {
+app.get("/bulk-products", async (_req, res) => {
   try {
     const products = [
       {
-        sku: "AUD-001",
+        id: 1,
         name: "Wireless Earbuds",
-        price: 1299,
-        link: makeAffiliateLink("https://www.amazon.in/s?k=wireless+earbuds"),
-        image: "https://m.media-amazon.com/images/I/61CGHv6kmWL._SX522_.jpg",
-        category: "Audio"
-      },
-      {
-        sku: "WAR-001",
-        name: "Smart Watch",
-        price: 1999,
-        link: makeAffiliateLink("https://www.amazon.in/s?k=smart+watch"),
-        image: "https://m.media-amazon.com/images/I/61y2VVWcGBL._SX522_.jpg",
-        category: "Wearables"
-      },
-      {
-        sku: "ACC-001",
-        name: "Power Bank",
-        price: 999,
-        link: makeAffiliateLink("https://www.amazon.in/s?k=power+bank"),
-        image: "https://m.media-amazon.com/images/I/61X5Jd0G7qL._SX522_.jpg",
-        category: "Accessories"
-      },
-      {
-        sku: "PHN-001",
-        name: "Smartphone X1",
-        price: 14999,
-        link: makeAffiliateLink("https://www.amazon.in/s?k=smartphone"),
-        image: "https://m.media-amazon.com/images/I/71d7rfSl0wL._SX679_.jpg",
-        category: "Smartphones"
-      },
-      {
-        sku: "ELC-001",
-        name: "Bluetooth Speaker",
-        price: 1499,
-        link: makeAffiliateLink("https://www.amazon.in/s?k=bluetooth+speaker"),
-        image: "https://m.media-amazon.com/images/I/71lG7gC6PBL._SX522_.jpg",
-        category: "Electronics"
-      }
-    ];
-
-    let added = 0;
-
-    for (const p of products) {
-      const exists = await Product.findOne({ sku: p.sku });
-      if (!exists) {
-        await Product.create(p);
-        added++;
-      }
-    }
-
-    res.json({ message: "Products Added 🚀", added });
-  } catch (err) {
-    res.status(500).json({ message: "Error adding products" });
-  }
-});
-
-app.get("/bulk-products", async (_req, res) => {
-  try {
-    const products = [];
-
-    const categories = [
-      {
-        name: "Wireless Earbuds",
+        slug: "wireless-earbuds",
         category: "Audio",
         price: 1299,
+        oldPrice: 2499,
+        rating: 4.3,
+        stock: true,
+        brand: "SoundMax",
+        description: "High quality wireless earbuds with deep bass and long battery backup.",
         images: [
           "https://m.media-amazon.com/images/I/61CGHv6kmWL._SX522_.jpg",
           "https://m.media-amazon.com/images/I/61imYpK33qL._SX522_.jpg"
         ]
       },
       {
+        id: 2,
         name: "Smart Watch",
+        slug: "smart-watch",
         category: "Wearables",
         price: 1999,
+        oldPrice: 3499,
+        rating: 4.1,
+        stock: true,
+        brand: "TechFit",
+        description: "Stylish smartwatch with heart rate monitor and sports modes.",
         images: [
           "https://m.media-amazon.com/images/I/61y2VVWcGBL._SX522_.jpg",
           "https://m.media-amazon.com/images/I/71Swqqe7XAL._SX522_.jpg"
         ]
       },
       {
+        id: 3,
         name: "Power Bank",
+        slug: "power-bank",
         category: "Accessories",
         price: 999,
+        oldPrice: 1799,
+        rating: 4.2,
+        stock: true,
+        brand: "ChargeUp",
+        description: "10000mAh fast charging power bank with dual USB output.",
         images: [
-          "https://m.media-amazon.com/images/I/61X5Jd0G7qL._SX522_.jpg"
+          "https://m.media-amazon.com/images/I/61X5Jd0G7qL._SX522_.jpg",
+          "https://m.media-amazon.com/images/I/71JQh7U7A-L._SX522_.jpg"
         ]
       },
       {
+        id: 4,
         name: "Bluetooth Speaker",
-        category: "Electronics",
+        slug: "bluetooth-speaker",
+        category: "Audio",
         price: 1499,
+        oldPrice: 2999,
+        rating: 4.4,
+        stock: true,
+        brand: "BoomX",
+        description: "Portable bluetooth speaker with rich sound and waterproof design.",
         images: [
-          "https://m.media-amazon.com/images/I/71lG7gC6PBL._SX522_.jpg"
+          "https://m.media-amazon.com/images/I/71lHx7E7n9L._SX522_.jpg",
+          "https://m.media-amazon.com/images/I/81cG6lT1cUL._SX522_.jpg"
         ]
       },
       {
-        name: "Smartphone",
-        category: "Smartphones",
-        price: 14999,
+        id: 5,
+        name: "Gaming Mouse",
+        slug: "gaming-mouse",
+        category: "Gaming",
+        price: 799,
+        oldPrice: 1499,
+        rating: 4.0,
+        stock: true,
+        brand: "GamePro",
+        description: "Ergonomic gaming mouse with RGB lighting and adjustable DPI.",
         images: [
-          "https://m.media-amazon.com/images/I/71d7rfSl0wL._SX679_.jpg"
+          "https://m.media-amazon.com/images/I/61mpMH5TzkL._SX522_.jpg",
+          "https://m.media-amazon.com/images/I/71L8o2nH2fL._SX522_.jpg"
+        ]
+      },
+      {
+        id: 6,
+        name: "Laptop Backpack",
+        slug: "laptop-backpack",
+        category: "Bags",
+        price: 1199,
+        oldPrice: 2199,
+        rating: 4.5,
+        stock: true,
+        brand: "UrbanCarry",
+        description: "Water resistant laptop backpack with multiple storage compartments.",
+        images: [
+          "https://m.media-amazon.com/images/I/81KEhB0WmIL._SX522_.jpg",
+          "https://m.media-amazon.com/images/I/71W8r6D8S0L._SX522_.jpg"
+        ]
+      },
+      {
+        id: 7,
+        name: "Mobile Holder",
+        slug: "mobile-holder",
+        category: "Accessories",
+        price: 299,
+        oldPrice: 699,
+        rating: 3.9,
+        stock: true,
+        brand: "HoldIt",
+        description: "Adjustable mobile holder for desk and car usage.",
+        images: [
+          "https://m.media-amazon.com/images/I/61aQKkJ0aNL._SX522_.jpg",
+          "https://m.media-amazon.com/images/I/71P6hT9lYjL._SX522_.jpg"
+        ]
+      },
+      {
+        id: 8,
+        name: "USB Cable",
+        slug: "usb-cable",
+        category: "Accessories",
+        price: 199,
+        oldPrice: 499,
+        rating: 4.1,
+        stock: true,
+        brand: "FastLink",
+        description: "Durable fast charging USB cable compatible with multiple devices.",
+        images: [
+          "https://m.media-amazon.com/images/I/61rJQx8GJLL._SX522_.jpg",
+          "https://m.media-amazon.com/images/I/71v8jFawK-L._SX522_.jpg"
         ]
       }
     ];
 
-    let count = 1;
-
-    for (let i = 0; i < 200; i++) {
-      for (const item of categories) {
-        const sku = `SKU-${count}`;
-        const exists = await Product.findOne({ sku });
-
-        if (!exists) {
-          products.push({
-            sku,
-            name: `${item.name} ${Math.floor(Math.random() * 999)}`,
-            price: item.price + Math.floor(Math.random() * 500),
-            link: makeAffiliateLink(`https://www.amazon.in/s?k=${encodeURIComponent(item.name)}`),
-            image: item.images[Math.floor(Math.random() * item.images.length)],
-            category: item.category
-          });
-        }
-
-        count++;
-      }
-    }
-
-    await Product.insertMany(products);
-
-    res.json({ message: "Smart Products Added 🚀", total: products.length });
-  } catch (err) {
-    res.status(500).json({ message: "Error adding products" });
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products
+    });
+  } catch (error) {
+    console.error("Error in /bulk-products:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch bulk products"
+    });
   }
 });
-
-app.use((_req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
